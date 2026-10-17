@@ -139,7 +139,7 @@ input.read();   // { jump: true, ... } from touch OR any pad
 
 Dead zone and stick→direction live here. Fully unit-tested; no native code.
 
-## 7. How apps get it — open
+## 7. How apps get it — decided: A (public repo)
 
 The release build runs `npm ci` then `eas build --local` on the self-hosted
 Mac runner, checking out only the app repo (the-deep-friar/ios-ci
@@ -153,10 +153,11 @@ needs credentials in all of those places.
 | C. Private repo, git dependency | SSH key or token on the runner and in EAS secrets | as A | Most setup; breaks EAS fallback until done |
 | D. GitHub Packages (private npm) | `NODE_AUTH_TOKEN` on runner + EAS + every dev machine | publish per change | Most ceremony |
 
-Leaning **A**. With a monorepo, a git dependency can't point at a subfolder
-in plain npm, so A also means either one package per repo or publishing
-packed tarballs as GitHub release assets (`npm i https://…/gamepad-0.1.0.tgz`),
-which is clean and pins exactly. To settle with Andrew.
+**Decided 2026-10-17: A.** The repo is public. Plain npm can't point a git
+dependency at a subfolder of a monorepo, so each release publishes packed
+tarballs as GitHub release assets and apps install those
+(`npm i https://github.com/the-deep-friar/game-kit/releases/download/gamepad-v0.1.0/gamepad-0.1.0.tgz`),
+which pins exactly and needs no credentials anywhere.
 
 ## 8. Build order
 
