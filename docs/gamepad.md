@@ -163,9 +163,9 @@ which pins exactly and needs no credentials anywhere.
 
 | # | What | Done when |
 |---|---|---|
-| 1 | Settle §7; package skeleton, CI (typecheck + jest) | Charlie Craft installs it and builds on the runner |
-| 2 | Native discovery + `pads()` + connect events + pad tester screen | Pro Controller and 8BitDo show up with player LEDs |
-| 3 | `read()` with latches; record real mappings in `docs/pads.md`; fix-ups | Every button on every pad we own lights the right control |
+| 1 | ✅ Settle §7; package skeleton, CI (typecheck + jest) | Charlie Craft installs it and builds on the runner |
+| 2 | 🔨 Native discovery + `pads()` + connect events + pad tester screen (gamepad 0.2.0, Charlie Craft About tab) | Pro Controller and 8BitDo show up with player LEDs |
+| 3 | 🔨 `read()` with latches (0.2.0); record real mappings in [`docs/pads.md`](pads.md); fix-ups | Every button on every pad we own lights the right control |
 | 4 | `input-actions` package + Charlie Craft's input moved onto it | Touch still works; jest green |
 | 5 | Glyphs + rumble | On-screen hints show Switch letters with a Switch pad |
 | 6 | Charlie Craft 2.3: bindings, hide touch controls while a pad is connected | Charlie plays a whole session from the sofa |
