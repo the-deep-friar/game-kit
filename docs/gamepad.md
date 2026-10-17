@@ -156,7 +156,7 @@ needs credentials in all of those places.
 **Decided 2026-10-17: A.** The repo is public. Plain npm can't point a git
 dependency at a subfolder of a monorepo, so each release publishes packed
 tarballs as GitHub release assets and apps install those
-(`npm i https://github.com/the-deep-friar/game-kit/releases/download/gamepad-v0.1.0/gamepad-0.1.0.tgz`),
+(`npm i https://github.com/the-deep-friar/game-kit/releases/download/gamepad-v0.1.0/game-kit-gamepad-0.1.0.tgz`),
 which pins exactly and needs no credentials anywhere.
 
 ## 8. Build order
