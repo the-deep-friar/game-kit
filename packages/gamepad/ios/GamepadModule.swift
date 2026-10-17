@@ -1,33 +1,51 @@
 import ExpoModulesCore
 
-/// game-kit's gamepad module (docs/gamepad.md). Step 1 of the build order: the
-/// JS surface exists and links into an app, but no controllers are discovered
-/// yet. Discovery, `read()` and latches arrive in steps 2–3.
+/// game-kit's gamepad module (docs/gamepad.md). Native discovers controllers,
+/// gives them player slots and keeps their latest state; TypeScript does dead
+/// zones and mapping to game actions.
 ///
 /// JS API (all synchronous):
-///   pads()              connected pads
-///   read(id)            one pad's buttons and sticks, or null
+///   pads()              connected pads, by player
+///   read(id)            one pad's buttons and sticks, or null; clears its press latches
 ///   glyph(id, control)  SF Symbol name for that pad's control, or null
-///   rumble(id, kind)    'tap' | 'thud' | 'buzz'
+///   rumble(id, kind)    'tap' | 'thud' | 'buzz' (not yet: build step 5)
 /// Events:
 ///   onConnect    pad
 ///   onDisconnect pad
 public class GamepadModule: Module {
+  private let registry = PadRegistry()
+
   public func definition() -> ModuleDefinition {
     Name("Gamepad")
 
     Events("onConnect", "onDisconnect")
 
+    OnCreate {
+      // The registry lets go of these in stop(), which breaks the module ↔ registry cycle.
+      self.registry.onConnect = { pad in self.sendEvent("onConnect", pad.dictionary) }
+      self.registry.onDisconnect = { pad in self.sendEvent("onDisconnect", pad.dictionary) }
+      self.registry.start()
+    }
+
+    OnDestroy {
+      self.registry.stop()
+    }
+
+    OnAppEntersBackground {
+      self.registry.releaseAll()
+    }
+
     Function("pads") { () -> [[String: Any]] in
-      []
+      self.registry.pads().map(\.dictionary)
     }
 
-    Function("read") { (_: String) -> [String: Any]? in
-      nil
+    Function("read") { (id: String) -> [String: Any]? in
+      self.registry.read(id)?.dictionary
     }
 
-    Function("glyph") { (_: String, _: String) -> String? in
-      nil
+    Function("glyph") { (id: String, control: String) -> String? in
+      guard let control = Control(rawValue: control) else { return nil }
+      return self.registry.glyph(id, control)
     }
 
     Function("rumble") { (_: String, _: String) in

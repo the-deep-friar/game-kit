@@ -42,7 +42,7 @@ export type Stick = { x: number; y: number };
 
 export type PadState = {
   buttons: Record<Control, ButtonState>;
-  /** -1..1 on each axis, raw: no dead zone applied. Up is +y. */
+  /** -1..1 on each axis, raw: no dead zone applied. Up and right are positive. */
   leftStick: Stick;
   rightStick: Stick;
 };
