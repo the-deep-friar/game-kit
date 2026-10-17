@@ -1,0 +1,35 @@
+# Push a tag `<package>-v<version>` (e.g. `gamepad-v0.1.0`) to publish that
+# package as a tarball on a GitHub release. Apps install the tarball URL:
+#   npm i https://github.com/the-deep-friar/game-kit/releases/download/gamepad-v0.1.0/game-kit-gamepad-0.1.0.tgz
+# The tag's version must match the package's package.json.
+name: release
+
+on:
+  push:
+    tags: ['*-v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: '.nvmrc', cache: 'npm' }
+      - run: npm ci
+      - run: npm run ci
+      - name: Pack and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          package="${TAG%-v*}"
+          version="${TAG##*-v}"
+          dir="packages/$package"
+          [ -d "$dir" ] || { echo "No package at $dir"; exit 1; }
+          actual="$(node -p "require('./$dir/package.json').version")"
+          [ "$actual" = "$version" ] || { echo "Tag says $version, $dir/package.json says $actual"; exit 1; }
+          tarball="$(npm pack -w "$dir" --silent)"
+          gh release create "$TAG" "$tarball" --title "$TAG" --generate-notes
