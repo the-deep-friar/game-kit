@@ -126,18 +126,42 @@ writing the plugin):
 ## 6. Input actions
 
 Separate TS package, `packages/input-actions`: Charlie Craft's
-`src/lib/input.ts` made generic over the action names, plus a gamepad binding.
+`src/lib/input.ts` made generic over the action names. No native code, no
+dependency on `gamepad`; fully unit-tested.
+
+**Built (0.2.0):** one `Input` per player, fed by any number of sources.
 
 ```ts
-const input = createInput(['moveLeft', 'moveRight', 'jump', 'dig', 'place'] as const);
-const bindings = { jump: ['south'], dig: ['rightTrigger'], place: ['leftTrigger'],
-                   moveLeft: [{ stick: 'left', dir: 'left' }], ... };
-// each frame
-applyGamepad(input, `pad:${pad.id}`, Gamepad.read(pad.id), bindings);
-input.read();   // { jump: true, ... } from touch OR any pad
+const ACTIONS = ['moveLeft', 'moveRight', 'jump', 'dig', 'place', 'nextTool', 'prevTool', 'craft'] as const;
+const inputs = createInputs([1, 2], ACTIONS);   // { 1: Input, 2: Input }
+
+// event-driven sources (touch buttons, a keyboard)
+inputs[1].press('touch', 'jump');  inputs[1].release('touch', 'jump');
+// polled sources (a pad, once per frame): what's down now, plus taps between polls
+inputs[pad.player].set(`pad:${pad.id}`, heldActions, tappedActions);
+inputs[2].releaseAll(`pad:${pad.id}`);          // on disconnect
+
+// game loop, once per frame per player
+const { held, pressed } = inputs[1].read();
+held.moveLeft;      // down now, by any source: walk, swim, hold-to-dig
+pressed.nextTool;   // true for exactly one read per press, even a tap shorter than a frame
+axis(held, 'moveLeft', 'moveRight');            // -1 | 0 | 1
+stickDirections(state.leftStick);               // [] | ['up'] | ['up', 'right'] ..., dead zone 0.3
 ```
 
-Dead zone and stick→direction live here. Fully unit-tested; no native code.
+An action is held while any source holds it. A press is counted when a source
+newly holds an action (`press`, or newly in `set`'s held list) or reports a
+tap (`set`'s third argument, from the pad's `pressedSinceLastRead`); `read()`
+clears them, and `releaseAll` drops a source's unread ones.
+
+**Next (with Charlie Craft 2.3):** an action map turning a pad snapshot into
+`set()`'s two lists, on top of `stickDirections`:
+
+```ts
+const bindings = { jump: ['south'], dig: ['rightTrigger'], place: ['leftTrigger'],
+                   moveLeft: [{ stick: 'left', dir: 'left' }], ... };
+applyGamepad(inputs[pad.player], `pad:${pad.id}`, Gamepad.read(pad.id), bindings);
+```
 
 ## 7. How apps get it — decided: A (public repo)
 
@@ -166,6 +190,6 @@ which pins exactly and needs no credentials anywhere.
 | 1 | ✅ Settle §7; package skeleton, CI (typecheck + jest) | Charlie Craft installs it and builds on the runner |
 | 2 | 🔨 Native discovery + `pads()` + connect events + pad tester screen (gamepad 0.2.0, Charlie Craft About tab) | Pro Controller and 8BitDo show up with player LEDs |
 | 3 | 🔨 `read()` with latches (0.2.0); record real mappings in [`docs/pads.md`](pads.md); fix-ups | Every button on every pad we own lights the right control |
-| 4 | `input-actions` package + Charlie Craft's input moved onto it | Touch still works; jest green |
+| 4 | 🔨 `input-actions` package: held + pressed per player, stick directions (0.2.0); Charlie Craft's input moved onto it (its 2.2) | Touch still works; jest green |
 | 5 | Glyphs + rumble | On-screen hints show Switch letters with a Switch pad |
 | 6 | Charlie Craft 2.3: bindings, hide touch controls while a pad is connected | Charlie plays a whole session from the sofa |

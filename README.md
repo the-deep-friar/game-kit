@@ -7,7 +7,7 @@ for setups we don't use.
 | Package | What | Status |
 |---|---|---|
 | `packages/gamepad` (`@game-kit/gamepad`) | Expo native module: game controllers via Apple's GameController framework | skeleton; design: [docs/gamepad.md](docs/gamepad.md) |
-| `packages/input-actions` (`@game-kit/input-actions`) | TypeScript: many input sources (touch, gamepad, keyboard) → one set of held actions | working; design: [docs/gamepad.md §6](docs/gamepad.md#6-input-actions) |
+| `packages/input-actions` (`@game-kit/input-actions`) | TypeScript: many input sources (touch, gamepad, keyboard) → one set of held actions per player, with once-per-press presses | working; design: [docs/gamepad.md §6](docs/gamepad.md#6-input-actions) |
 
 Rule: a module moves in here when it's built for reuse on purpose (gamepad) or
 when a second app actually needs it. No speculative extraction.
