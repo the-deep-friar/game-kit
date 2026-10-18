@@ -1,6 +1,6 @@
 {
   "name": "@game-kit/input-actions",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Many input sources (touch, gamepad, keyboard) feeding one set of held actions",
   "license": "MIT",
   "repository": "github:the-deep-friar/game-kit",

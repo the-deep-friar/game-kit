@@ -1,6 +1,6 @@
 {
   "name": "@game-kit/gamepad",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Game controllers on iOS through Apple's GameController framework, for our Expo apps",
   "license": "MIT",
   "repository": "github:the-deep-friar/game-kit",

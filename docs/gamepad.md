@@ -1,6 +1,6 @@
 # gamepad — design
 
-Status: **proposed** · 2026-10-17
+Status: **building** (0.3.0) · 2026-10-17
 
 A small Expo native module that lets our games read physical game controllers
 on iPad (and later iPhone / tvOS). First user: Charlie Craft roadmap 2.3, where
@@ -60,9 +60,14 @@ type Pad = {
   id: string;                    // stable while connected
   player: 1 | 2 | 3 | 4;
   name: string;                  // "Pro Controller"
+  productCategory: string;       // "Switch Pro Controller", "Joy-Con (L)" (0.3.0)
   layout: 'nintendo' | 'xbox' | 'playstation' | 'other';
+  shape: 'full' | 'singleJoyCon'; // one Joy-Con alone, held sideways (0.3.0)
+  facesSwapped: boolean;         // Nintendo letters arrived in Apple's A/B/X/Y slots and were swapped back (0.3.0)
   hasRumble: boolean;
 };
+
+type GlyphElement = Control | 'leftStick' | 'rightStick' | 'dpad';   // 0.3.0
 
 type PadState = {
   buttons: Record<Control, { down: boolean; value: number; pressedSinceLastRead: boolean }>;
@@ -72,7 +77,7 @@ type PadState = {
 
 Gamepad.pads(): Pad[];                              // sync
 Gamepad.read(id: string): PadState | null;          // sync, call once per frame
-Gamepad.glyph(id: string, control: Control): string | null;   // SF Symbol name for this pad's button
+Gamepad.glyph(id: string, element: GlyphElement): string | null;   // SF Symbol name for this pad's button, stick or d-pad
 Gamepad.rumble(id: string, kind: 'tap' | 'thud' | 'buzz'): void;
 Gamepad.addListener('onConnect' | 'onDisconnect', (pad: Pad) => void);
 
@@ -98,8 +103,19 @@ hardware; it may differ between the Pro Controller, a Joy-Con pair and an
 
 1. Build a tiny "pad tester" screen first (shows each control lighting up).
 2. Press every button on each pad we own; record what arrives in `docs/pads.md`.
-3. If a pad arrives label-mapped, `PadRegistry` swaps it back to positions,
-   keyed by `GCController.productCategory`.
+3. If a pad arrives label-mapped, `PadRegistry` swaps it back to positions.
+
+**Built (0.3.0): the pad says which way it arrived.** Rather than a table of
+product names, `PadMapping.faces` asks the pad itself when it connects: on a
+Nintendo pad, if Apple's `buttonA` (bottom, in Apple's model) has the SF Symbol
+`a.circle…`, the letters came through by label. Nintendo prints A on the right,
+B at the bottom, X on top and Y on the left, so the module swaps back:
+south ← `buttonB`, east ← `buttonA`, north ← `buttonX`, west ← `buttonY`.
+If `buttonA` is drawn as B, or has no symbol, Apple's positions are kept.
+Snapshots and glyphs both go through the same mapping, so `glyph(id, 'south')`
+is the picture of the bottom button either way (`b.circle` on a Switch pad).
+`Pad.facesSwapped` reports which happened, for the tester and `docs/pads.md`.
+Non-Nintendo pads are never swapped.
 
 Glyphs come from `GCControllerElement.sfSymbolsName` on the real element, so
 they're right for each pad without our own table. `layout` is derived from
@@ -110,6 +126,14 @@ single Joy-Con held sideways is a small pad with fewer buttons (no right stick,
 fewer shoulders); `read()` reports what's missing as never pressed, and the
 game's action map should give everything a binding that works on one
 Joy-Con (useful later for two players on one TV).
+
+**Built (0.3.0):** `Pad.shape` is `'singleJoyCon'` when the product category
+names a Joy-Con but not the pair (`Joy-Con (L)` / `Joy-Con (R)`, not
+`Joy-Con (L/R)`), else `'full'`. Each single Joy-Con is its own controller with
+its own player slot, so a split pair is two players with no extra work. Apps
+pick a smaller binding map for that shape: the one stick, the four face
+buttons and the side buttons (SL/SR, expected as the shoulders; to be
+confirmed in `docs/pads.md`).
 
 ## 5. Info.plist and the system
 
@@ -154,14 +178,29 @@ newly holds an action (`press`, or newly in `set`'s held list) or reports a
 tap (`set`'s third argument, from the pad's `pressedSinceLastRead`); `read()`
 clears them, and `releaseAll` drops a source's unread ones.
 
-**Next (with Charlie Craft 2.3):** an action map turning a pad snapshot into
-`set()`'s two lists, on top of `stickDirections`:
+**Built (0.3.0, with Charlie Craft 2.3):** an action map turning a pad snapshot
+into `set()`'s two lists, on top of `stickDirections`. It lives here, not in
+`gamepad`, typed by shape (`PadSnapshot`: `buttons` with `down` and
+`pressedSinceLastRead`, `leftStick`, `rightStick`), so neither package depends
+on the other: `gamepad`'s `PadState` fits it as is.
 
 ```ts
-const bindings = { jump: ['south'], dig: ['rightTrigger'], place: ['leftTrigger'],
-                   moveLeft: [{ stick: 'left', dir: 'left' }], ... };
+const bindings: PadBindings<Action, Control> = {
+  jump: ['south'], dig: ['rightTrigger'], place: ['leftTrigger'],
+  moveLeft: [{ stick: 'leftStick', dir: 'left' }, 'dpadLeft'], ...
+};
+padActions(Gamepad.read(pad.id), bindings);       // { held: ['jump'], pressed: ['jump'] }
 applyGamepad(inputs[pad.player], `pad:${pad.id}`, Gamepad.read(pad.id), bindings);
 ```
+
+- An action is held while **any** of its bindings is: a button `down`, or a
+  stick pushed that way (diagonals hold both ways, dead zone 0.3 or the one given).
+- It's pressed when any of its buttons has `pressedSinceLastRead`. Sticks have
+  no latch; a newly pushed direction counts as a press through `set()`.
+- Buttons a snapshot lacks are never down, so a map may name controls a small
+  pad doesn't have.
+- `applyGamepad(input, source, null, ...)` (the pad has gone) is `releaseAll(source)`.
+- The map itself (which button does what) belongs to the game, not here.
 
 ## 7. How apps get it — decided: A (public repo)
 
@@ -191,5 +230,5 @@ which pins exactly and needs no credentials anywhere.
 | 2 | 🔨 Native discovery + `pads()` + connect events + pad tester screen (gamepad 0.2.0, Charlie Craft About tab) | Pro Controller and 8BitDo show up with player LEDs |
 | 3 | 🔨 `read()` with latches (0.2.0); record real mappings in [`docs/pads.md`](pads.md); fix-ups | Every button on every pad we own lights the right control |
 | 4 | 🔨 `input-actions` package: held + pressed per player, stick directions (0.2.0); Charlie Craft's input moved onto it (its 2.2) | Touch still works; jest green |
-| 5 | Glyphs + rumble | On-screen hints show Switch letters with a Switch pad |
-| 6 | Charlie Craft 2.3: bindings, hide touch controls while a pad is connected | Charlie plays a whole session from the sofa |
+| 5 | 🔨 Glyphs for every control, stick and the d-pad (gamepad 0.3.0); Nintendo face fix from the pad's own glyphs; single Joy-Con shape. Rumble still to do | On-screen hints show Switch letters with a Switch pad |
+| 6 | 🔨 Action map (`padActions` / `applyGamepad`, input-actions 0.3.0); Charlie Craft 2.3: bindings per player. Hiding touch controls is Charlie Craft 2.6 | Charlie plays a whole session from the sofa |

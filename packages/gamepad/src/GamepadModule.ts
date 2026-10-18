@@ -1,6 +1,6 @@
 import { NativeModule, requireOptionalNativeModule } from 'expo';
 
-import type { Control, Pad, PadState, RumbleKind } from './types';
+import type { GlyphElement, Pad, PadState, RumbleKind } from './types';
 
 /** The Swift module's surface, exactly as it crosses the bridge. Everything is synchronous. */
 export type GamepadEvents = {
@@ -11,7 +11,7 @@ export type GamepadEvents = {
 export declare class GamepadNativeModule extends NativeModule<GamepadEvents> {
   pads(): Pad[];
   read(id: string): PadState | null;
-  glyph(id: string, control: Control): string | null;
+  glyph(id: string, element: GlyphElement): string | null;
   rumble(id: string, kind: RumbleKind): void;
 }
 

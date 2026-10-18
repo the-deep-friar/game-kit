@@ -18,10 +18,12 @@ final class PadRegistry {
   private final class Entry {
     let controller: GCController
     let info: PadInfo
+    let faces: FaceMapping
     var state = PadState()
-    init(controller: GCController, info: PadInfo) {
+    init(controller: GCController, info: PadInfo, faces: FaceMapping) {
       self.controller = controller
       self.info = info
+      self.faces = faces
     }
   }
 
@@ -65,10 +67,10 @@ final class PadRegistry {
     }
   }
 
-  func glyph(_ id: String, _ control: Control) -> String? {
-    let controller = lock.withLock { entries.values.first(where: { $0.info.id == id })?.controller }
-    guard let gamepad = controller?.extendedGamepad else { return nil }
-    return PadMapping.element(control, of: gamepad)?.sfSymbolsName
+  func glyph(_ id: String, _ element: GlyphElement) -> String? {
+    let entry = lock.withLock { entries.values.first(where: { $0.info.id == id }) }
+    guard let entry, let gamepad = entry.controller.extendedGamepad else { return nil }
+    return PadMapping.element(element, of: gamepad, faces: entry.faces)?.sfSymbolsName
   }
 
   /// Lets go of every control, e.g. when the app goes to the background, so
@@ -84,16 +86,20 @@ final class PadRegistry {
       guard entries[key] == nil else { return nil }
       let taken = Set(entries.values.map(\.info.player))
       guard let player = (1...4).first(where: { !taken.contains($0) }) else { return nil }
+      let faces = PadMapping.faces(of: controller, gamepad)
       let info = PadInfo(
         id: "pad-\(nextId)",
         player: player,
         name: controller.vendorName ?? controller.productCategory,
+        productCategory: controller.productCategory,
         layout: PadMapping.layout(of: controller),
+        shape: PadMapping.shape(of: controller),
+        facesSwapped: faces == .nintendoLabels,
         hasRumble: controller.haptics != nil
       )
       nextId += 1
-      let entry = Entry(controller: controller, info: info)
-      entry.state = PadMapping.snapshot(of: gamepad)
+      let entry = Entry(controller: controller, info: info, faces: faces)
+      entry.state = PadMapping.snapshot(of: gamepad, faces: faces)
       entries[key] = entry
       return info
     }
@@ -113,10 +119,9 @@ final class PadRegistry {
   }
 
   private func update(_ controller: GCController, from gamepad: GCExtendedGamepad) {
-    let next = PadMapping.snapshot(of: gamepad)
     lock.withLock {
       guard let entry = entries[ObjectIdentifier(controller)] else { return }
-      entry.state.merge(next)
+      entry.state.merge(PadMapping.snapshot(of: gamepad, faces: entry.faces))
     }
   }
 }

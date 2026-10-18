@@ -20,13 +20,29 @@ export const CONTROLS = [
 
 export type Control = (typeof CONTROLS)[number];
 
+/** Anything with its own picture: every control, plus each stick and the d-pad as a whole. */
+export type GlyphElement = Control | 'leftStick' | 'rightStick' | 'dpad';
+
 export type Pad = {
   /** Stable while the pad stays connected. */
   id: string;
   player: 1 | 2 | 3 | 4;
   /** What the system calls it, e.g. "Pro Controller". */
   name: string;
+  /** GameController's product category, e.g. "Switch Pro Controller" or "Joy-Con (L)". For the pad tester and docs/pads.md. */
+  productCategory: string;
   layout: 'nintendo' | 'xbox' | 'playstation' | 'other';
+  /**
+   * `'singleJoyCon'` for one Joy-Con on its own, held sideways: one stick (the left), no right
+   * stick, and only the face buttons, the two side buttons (SL/SR) and a few others to reach.
+   * Give it bindings that need nothing else. A pair of Joy-Cons used together is `'full'`.
+   */
+  shape: 'full' | 'singleJoyCon';
+  /**
+   * True when this Nintendo pad arrived with its printed letters in Apple's A/B/X/Y slots and
+   * the module swapped them back, so `south` is still the bottom button (docs/gamepad.md §4).
+   */
+  facesSwapped: boolean;
   hasRumble: boolean;
 };
 
