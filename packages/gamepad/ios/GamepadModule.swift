@@ -7,7 +7,7 @@ import ExpoModulesCore
 /// JS API (all synchronous):
 ///   pads()              connected pads, by player
 ///   read(id)            one pad's buttons and sticks, or null; clears its press latches
-///   glyph(id, control)  SF Symbol name for that pad's control, or null
+///   glyph(id, element)  SF Symbol name for that pad's control, stick or d-pad, or null
 ///   rumble(id, kind)    'tap' | 'thud' | 'buzz' (not yet: build step 5)
 /// Events:
 ///   onConnect    pad
@@ -43,9 +43,9 @@ public class GamepadModule: Module {
       self.registry.read(id)?.dictionary
     }
 
-    Function("glyph") { (id: String, control: String) -> String? in
-      guard let control = Control(rawValue: control) else { return nil }
-      return self.registry.glyph(id, control)
+    Function("glyph") { (id: String, element: String) -> String? in
+      guard let element = GlyphElement(element) else { return nil }
+      return self.registry.glyph(id, element)
     }
 
     Function("rumble") { (_: String, _: String) in

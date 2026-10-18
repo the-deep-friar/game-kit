@@ -9,6 +9,7 @@ describe('Gamepad without the native module', () => {
   it('reads nothing and has no glyphs', () => {
     expect(Gamepad.read('pad')).toBeNull();
     expect(Gamepad.glyph('pad', 'south')).toBeNull();
+    expect(Gamepad.glyph('pad', 'leftStick')).toBeNull();
   });
 
   it('accepts rumble and listeners without throwing', () => {

@@ -1,5 +1,5 @@
 import native from './GamepadModule';
-import type { Control, Pad, PadState, RumbleKind } from './types';
+import type { GlyphElement, Pad, PadState, RumbleKind } from './types';
 
 export type Subscription = { remove(): void };
 
@@ -15,9 +15,12 @@ export const Gamepad = {
   read(id: string): PadState | null {
     return native?.read(id) ?? null;
   },
-  /** SF Symbol name for `control` as drawn on this pad (Switch "B" vs Xbox "A"), or null if it has none. */
-  glyph(id: string, control: Control): string | null {
-    return native?.glyph(id, control) ?? null;
+  /**
+   * SF Symbol name for a control, stick or the d-pad as drawn on this pad (the bottom button is
+   * "B" on a Switch pad, "A" on an Xbox one), or null if it has none.
+   */
+  glyph(id: string, element: GlyphElement): string | null {
+    return native?.glyph(id, element) ?? null;
   },
   rumble(id: string, kind: RumbleKind): void {
     native?.rumble(id, kind);
