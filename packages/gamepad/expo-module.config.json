@@ -1,6 +1,7 @@
 {
   "platforms": ["apple"],
   "apple": {
-    "modules": ["GamepadModule"]
+    "modules": ["GamepadModule"],
+    "podspecPath": ["ios/Gamepad.podspec", "ios/GamepadCore.podspec"]
   }
 }

@@ -50,3 +50,12 @@ jobs:
         with: { node-version-file: '.nvmrc', cache: 'npm' }
       - run: npm ci
       - run: npm run build
+
+  # GamepadCore, the Swift pad core (docs/swift-core.md), on Linux like the apps' engines test
+  # it. `npm run test:swift` runs the same on a Mac.
+  swift:
+    runs-on: ubuntu-latest
+    container: swift:6.4-noble
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test

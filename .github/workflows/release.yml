@@ -1,18 +1,26 @@
-# Push a tag `<package>-v<version>` (e.g. `gamepad-v0.1.0`) to publish that
-# package as a tarball on a GitHub release. Apps install the tarball URL:
+# Two kinds of tag (README "Releasing"):
+#
+# `<package>-v<version>` (e.g. `gamepad-v0.1.0`) publishes that package as a tarball on a GitHub
+# release. Apps install the tarball URL:
 #   npm i https://github.com/the-deep-friar/game-kit/releases/download/gamepad-v0.1.0/game-kit-gamepad-0.1.0.tgz
 # The tag's version must match the package's package.json.
+#
+# A bare semver tag (e.g. `0.4.0`) is the SwiftPM version of GamepadCore (Package.swift), which
+# SwiftPM resolves straight from git; no release is made. It must equal packages/gamepad's
+# version, so a SwiftPM pin and the npm tarball always carry the same Swift sources. Push it on
+# the same commit as `gamepad-v<version>`.
 name: release
 
 on:
   push:
-    tags: ['*-v*']
+    tags: ['*-v*', '[0-9]+.[0-9]+.[0-9]+']
 
 permissions:
   contents: write
 
 jobs:
   release:
+    if: contains(github.ref_name, '-v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,3 +41,19 @@ jobs:
           [ "$actual" = "$version" ] || { echo "Tag says $version, $dir/package.json says $actual"; exit 1; }
           tarball="$(npm pack -w "$dir" --silent)"
           gh release create "$TAG" "$tarball" --title "$TAG" --generate-notes
+
+  swift-version:
+    if: ${{ !contains(github.ref_name, '-v') }}
+    runs-on: ubuntu-latest
+    container: swift:6.4-noble
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag matches packages/gamepad's version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          actual="$(sed -n 's/^  "version": "\(.*\)",$/\1/p' packages/gamepad/package.json)"
+          [ "$actual" = "$TAG" ] || { echo "Tag says $TAG, packages/gamepad/package.json says $actual"; exit 1; }
+          podspec="$(sed -n "s/^  s.version *= '\(.*\)'$/\1/p" packages/gamepad/ios/GamepadCore.podspec)"
+          [ "$podspec" = "$TAG" ] || { echo "Tag says $TAG, GamepadCore.podspec says $podspec"; exit 1; }
+      - run: swift test

@@ -1,6 +1,6 @@
 # gamepad — design
 
-Status: **building** (0.3.0) · 2026-10-17
+Status: **building** (0.4.0) · 2026-10-20
 
 A small Expo native module that lets our games read physical game controllers
 on iPad (and later iPhone / tvOS). First user: Charlie Craft roadmap 2.3, where
@@ -31,19 +31,25 @@ navigation of normal app screens, Android.
 
 ```
 packages/gamepad/
-  expo-module.config.json      apple: GamepadModule
-  app.plugin.js                Info.plist keys (§5)
+  expo-module.config.json      apple: GamepadModule; pods Gamepad + GamepadCore
+  ios/GamepadCore/             plain-Swift pad logic, also the SwiftPM library (docs/swift-core.md)
+  ios/GamepadCore.podspec      that folder as its own pod, module GamepadCore
+  ios/Gamepad.podspec          everything else in ios/, depends on GamepadCore
   ios/GamepadModule.swift      Expo module definition: functions + events
-  ios/PadRegistry.swift        tracks GCControllers, player slots, latches
-  ios/PadSnapshot.swift        GCExtendedGamepad → snapshot record
+  ios/PadRegistry.swift        tracks GCControllers, player slots, latches for JS read()
+  ios/PadMapping.swift         GCExtendedGamepad → our controls and snapshots, via GamepadCore
+  ios/PadReader.swift          per-frame readings for game loops in Swift (0.4.0)
+  ios-tests/GamepadCoreTests/  swift test
   src/index.ts                 typed JS API (§3)
   src/use-gamepads.ts          React hook: connected pads, re-renders on connect/disconnect
-  src/testing.ts               fake native module for app-side jest tests
 ```
 
 Native does only what needs Apple APIs: discovery, reading values, latching
 presses, LEDs, haptics. Everything else (dead zones, action mapping, which
-pad is "player 1" in the game) is TypeScript, tested with jest.
+pad is "player 1" in the game) is TypeScript, tested with jest, for games
+whose loop runs in JS. Games whose loop runs in Swift (Charlie Craft and Jude
+Craft since October 2026) use `PadReader` and GamepadCore instead: the same
+rules in Swift, tested with `swift test` (docs/swift-core.md).
 
 ## 3. JS API
 
@@ -106,7 +112,7 @@ hardware; it may differ between the Pro Controller, a Joy-Con pair and an
 3. If a pad arrives label-mapped, `PadRegistry` swaps it back to positions.
 
 **Built (0.3.0): the pad says which way it arrived.** Rather than a table of
-product names, `PadMapping.faces` asks the pad itself when it connects: on a
+product names, `PadKind.faces` (GamepadCore, 0.4.0; was `PadMapping.faces`) asks the pad itself when it connects: on a
 Nintendo pad, if Apple's `buttonA` (bottom, in Apple's model) has the SF Symbol
 `a.circle…`, the letters came through by label. Nintendo prints A on the right,
 B at the bottom, X on top and Y on the left, so the module swaps back:
@@ -150,7 +156,13 @@ writing the plugin):
 ## 6. Input actions
 
 Separate TS package, `packages/input-actions`: Charlie Craft's
-`src/lib/input.ts` made generic over the action names. No native code, no
+`src/lib/input.ts` made generic over the action names.
+
+**Status (2026-10-20):** for games whose loop runs in JS (Parlor, anything
+new and simple). Charlie Craft and Jude Craft now run their loop in Swift and
+read pads natively through GamepadCore's `Sticks` / `PadActions`, the same
+rules ported; from this package they import only the `PadBindings` type, for
+the HUD's copy of the bindings. Kept, not deprecated. No native code, no
 dependency on `gamepad`; fully unit-tested.
 
 **Built (0.2.0):** one `Input` per player, fed by any number of sources.
@@ -232,3 +244,4 @@ which pins exactly and needs no credentials anywhere.
 | 4 | 🔨 `input-actions` package: held + pressed per player, stick directions (0.2.0); Charlie Craft's input moved onto it (its 2.2) | Touch still works; jest green |
 | 5 | 🔨 Glyphs for every control, stick and the d-pad (gamepad 0.3.0); Nintendo face fix from the pad's own glyphs; single Joy-Con shape. Rumble still to do | On-screen hints show Switch letters with a Switch pad |
 | 6 | 🔨 Action map (`padActions` / `applyGamepad`, input-actions 0.3.0); Charlie Craft 2.3: bindings per player. Hiding touch controls is Charlie Craft 2.6 | Charlie plays a whole session from the sofa |
+| 7 | 🔨 Swift pad core: GamepadCore (SwiftPM + pod) and `PadReader` (gamepad 0.4.0), so the native engines stop copying `PadMapping` ([swift-core.md](swift-core.md)) | Charlie Craft and Jude Craft build against it; CraftCore's tests still pass |
