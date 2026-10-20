@@ -1,4 +1,5 @@
 import GameController
+import GamepadCore
 
 /// Tracks connected controllers, gives each a player slot, and keeps the
 /// latest state of every control so `read()` can be answered from any thread.
@@ -18,9 +19,9 @@ final class PadRegistry {
   private final class Entry {
     let controller: GCController
     let info: PadInfo
-    let faces: FaceMapping
-    var state = PadState()
-    init(controller: GCController, info: PadInfo, faces: FaceMapping) {
+    let faces: PadKind.Faces
+    var state = PadSnapshot()
+    init(controller: GCController, info: PadInfo, faces: PadKind.Faces) {
       self.controller = controller
       self.info = info
       self.faces = faces
@@ -58,7 +59,7 @@ final class PadRegistry {
   }
 
   /// The pad's current state; clears its "pressed since last read" latches.
-  func read(_ id: String) -> PadState? {
+  func read(_ id: String) -> PadSnapshot? {
     lock.withLock {
       guard let entry = entries.values.first(where: { $0.info.id == id }) else { return nil }
       let state = entry.state
@@ -76,7 +77,7 @@ final class PadRegistry {
   /// Lets go of every control, e.g. when the app goes to the background, so
   /// nothing reads as held when it comes back.
   func releaseAll() {
-    lock.withLock { entries.values.forEach { $0.state = PadState() } }
+    lock.withLock { entries.values.forEach { $0.state = PadSnapshot() } }
   }
 
   private func connect(_ controller: GCController) {

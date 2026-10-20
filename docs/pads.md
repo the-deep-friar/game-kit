@@ -11,7 +11,7 @@ For each pad, press each button and note which control lights up.
 | Single Joy-Con (sideways) | | | | | | | | | |
 | 8BitDo (model?, mode?) | | | | | | | | | |
 
-If a pad's face buttons arrive by label instead of position, `PadMapping`
+If a pad's face buttons arrive by label instead of position, GamepadCore's `PadKind`
 swaps them for that pad (docs/gamepad.md §4), from 0.3.0 automatically: it
 reads the bottom button's own SF Symbol, and the tester shows `facesSwapped`.
 Either way the bottom button must light **south** and show a **B** picture on a
