@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name           = 'Gamepad'
-  s.version        = '0.4.1'
+  s.version        = '0.5.0'
   s.summary        = 'Game controllers through the GameController framework'
   s.description    = 'Reads connected game controllers (buttons, sticks, player slots) for game-kit: the Expo module for JS, and PadReader for native game loops. Pad logic comes from GamepadCore.'
   s.author         = ''

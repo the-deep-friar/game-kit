@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name           = 'GamepadCore'
-  s.version        = '0.4.1'
+  s.version        = '0.5.0'
   s.summary        = 'Game-agnostic pad logic in plain Swift'
   s.description    = 'Controls by position, pad layout and shape, the Nintendo face fix, stick directions and action maps (docs/swift-core.md). No GameController or UIKit; the same sources are the GamepadCore SwiftPM library tested on Linux.'
   s.author         = ''
