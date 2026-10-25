@@ -1,10 +1,15 @@
 # gamepad — design
 
-Status: **building** (0.4.0) · 2026-10-20
+Status: **building** (0.4.1) · 2026-10-24
 
 A small Expo native module that lets our games read physical game controllers
 on iPad (and later iPhone / tvOS). First user: Charlie Craft roadmap 2.3, where
 Charlie plays on the sofa with the game AirPlayed to the TV.
+
+**tvOS** (0.4.1): both pods (`Gamepad`, `GamepadCore`) and the SwiftPM library declare tvOS 18,
+so autolinking keeps them in a tvOS build. The Siri Remote is a `GCMicroGamepad` with no
+extended gamepad: `PadRegistry` and `PadReader` skip it, so it never gets a player slot or
+shows up in `pads()` / `readings()`. It still drives tvOS focus and the menu button as usual.
 
 Controllers we actually own: Nintendo Switch Pro, Joy-Cons, one 8BitDo. Those
 are the test devices; Xbox and PlayStation pads should work for free through
