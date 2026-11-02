@@ -35,7 +35,12 @@ tested on Linux) depends on this repo by git URL at the same version:
 // target: dependencies: [.product(name: "GamepadCore", package: "game-kit")]
 ```
 
-Same sources, same module name, so `import GamepadCore` works in both builds. Keep the npm and
+Same sources, same module name, so `import GamepadCore` works in both builds.
+
+A native app with no Expo (SwiftUI + SpriteKit) gets `PadReader` the same way: add the `Gamepad`
+product too (Apple platforms only) and `import Gamepad`. It's the pod's sources minus the Expo
+module, so pads get no player slots from `PadRegistry` there (`PadReading.slot` stays 0); key
+players by `PadReading.id`. Keep the npm and
 SwiftPM versions equal. Step by step for the Craft apps: [docs/swift-core.md §4](docs/swift-core.md#4-moving-charlie-craft--jude-craft-onto-it).
 
 ## Developing
