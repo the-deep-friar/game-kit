@@ -151,3 +151,23 @@ struct ActionTests {
     #expect(frame == PadActionFrame())
   }
 }
+
+@Suite("rumble")
+struct RumbleTests {
+  @Test("numbers are held to their ranges")
+  func clamped() {
+    let r = PadRumble(intensity: 1.7, sharpness: -0.2, duration: -1)
+    #expect(r.intensity == 1)
+    #expect(r.sharpness == 0)
+    #expect(r.duration == 0)
+    #expect(r.side == .both)
+  }
+
+  @Test("the named ones: a tap is a tick, lighter and crisper than a thud")
+  func named() {
+    #expect(PadRumble.tap.duration == 0)
+    #expect(PadRumble.tap.intensity < PadRumble.thud.intensity)
+    #expect(PadRumble.tap.sharpness > PadRumble.thud.sharpness)
+    #expect(PadRumble.buzz.duration > PadRumble.thud.duration)
+  }
+}

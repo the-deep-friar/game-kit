@@ -38,6 +38,10 @@ Not here: any game's actions, bindings tables, player feeds (Charlie Craft's `Pa
   latches (taps between frames count) and slots from the `playerIndex` that `PadRegistry` sets.
   It never touches `valueChangedHandler` or `playerIndex`, so it runs alongside the JS module.
   `log` takes the app's logger; `logPresses` adds every press and let-go.
+  `rumble(id, PadRumble)` plays a rumble in one pad (gamepad 0.6.0): `PadRumble` is GamepadCore's
+  (how hard, how crisp, how long, which grip), so a game picks its rumbles in code it can test;
+  `PadRumbler` plays it through CoreHaptics, one engine per grip, made on first use and started
+  again after the system stops it. Pads with no haptics play nothing (`canRumble(id)`).
 
 `PadReader` lives here rather than in the app because nothing in it is about one game: it is
 "GameController → latched `PadState` per frame", and it depends on `PadRegistry`'s contract

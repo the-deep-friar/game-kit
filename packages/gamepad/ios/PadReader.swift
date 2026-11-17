@@ -18,6 +18,9 @@ import GamepadCore
 ///   owns both. Only per-button handlers, which GameController keeps apart from the profile's.
 /// - Face buttons are by position, with the Nintendo fix (`PadKind.faces`), as in `read()`.
 ///
+/// - **Rumble** (`rumble(_:_:)`): a `PadRumble` played in one pad through CoreHaptics, where the
+///   pad has haptics (DualSense, DualShock 4, Xbox, Switch Pro; not the Siri Remote).
+///
 /// Per frame it costs a look at ≤ 4 controllers' 16 buttons and 4 axes.
 @MainActor
 public final class PadReader {
@@ -31,6 +34,9 @@ public final class PadReader {
     /// Each control's element on this pad, worked out once.
     let buttons: [(PadControl, GCControllerButtonInput)]
     var latched: Set<PadControl> = []
+    /// Its rumble, made the first time it's asked for (nil: none made yet, or it has none).
+    var rumbler: PadRumbler?
+    var noRumble = false
 
     init(id: String, controller: GCController, pad: GCExtendedGamepad) {
       self.id = id
@@ -105,6 +111,27 @@ public final class PadReader {
   /// button pressed while away doesn't fire.
   public func clearLatches() {
     for entry in entries.values { entry.latched = [] }
+  }
+
+  /// Plays `rumble` in the pad `id` (a reading's id). Nothing happens for a pad that's gone or
+  /// has no haptics. Cheap to call: a rumble asked for before is kept ready (`PadRumbler`).
+  public func rumble(_ id: String, _ rumble: PadRumble) {
+    guard let entry = entries.values.first(where: { $0.id == id }), !entry.noRumble else { return }
+    if entry.rumbler == nil {
+      guard let rumbler = PadRumbler(entry.controller) else {
+        entry.noRumble = true
+        log?("pads: \(name(entry.controller)) has no rumble")
+        return
+      }
+      rumbler.log = { [weak self] line in self?.log?(line) }
+      entry.rumbler = rumbler
+    }
+    entry.rumbler?.play(rumble)
+  }
+
+  /// Whether the pad `id` can rumble at all.
+  public func canRumble(_ id: String) -> Bool {
+    entries.values.first { $0.id == id }?.controller.haptics != nil
   }
 
   private static func slot(of controller: GCController) -> Int {

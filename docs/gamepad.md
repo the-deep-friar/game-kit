@@ -43,7 +43,8 @@ packages/gamepad/
   ios/GamepadModule.swift      Expo module definition: functions + events
   ios/PadRegistry.swift        tracks GCControllers, player slots, latches for JS read()
   ios/PadMapping.swift         GCExtendedGamepad → our controls and snapshots, via GamepadCore
-  ios/PadReader.swift          per-frame readings for game loops in Swift (0.4.0)
+  ios/PadReader.swift          per-frame readings for game loops in Swift (0.4.0); rumble (0.6.0)
+  ios/PadRumbler.swift         one pad's CoreHaptics engines, for PadReader.rumble (0.6.0)
   ios-tests/GamepadCoreTests/  swift test
   src/index.ts                 typed JS API (§3)
   src/use-gamepads.ts          React hook: connected pads, re-renders on connect/disconnect
@@ -247,6 +248,6 @@ which pins exactly and needs no credentials anywhere.
 | 2 | 🔨 Native discovery + `pads()` + connect events + pad tester screen (gamepad 0.2.0, Charlie Craft About tab) | Pro Controller and 8BitDo show up with player LEDs |
 | 3 | 🔨 `read()` with latches (0.2.0); record real mappings in [`docs/pads.md`](pads.md); fix-ups | Every button on every pad we own lights the right control |
 | 4 | 🔨 `input-actions` package: held + pressed per player, stick directions (0.2.0); Charlie Craft's input moved onto it (its 2.2) | Touch still works; jest green |
-| 5 | 🔨 Glyphs for every control, stick and the d-pad (gamepad 0.3.0); Nintendo face fix from the pad's own glyphs; single Joy-Con shape. Rumble still to do | On-screen hints show Switch letters with a Switch pad |
+| 5 | 🔨 Glyphs for every control, stick and the d-pad (gamepad 0.3.0); Nintendo face fix from the pad's own glyphs; single Joy-Con shape. Rumble: in Swift through `PadReader.rumble` (gamepad 0.6.0); the JS `rumble()` is still a stub | On-screen hints show Switch letters with a Switch pad |
 | 6 | 🔨 Action map (`padActions` / `applyGamepad`, input-actions 0.3.0); Charlie Craft 2.3: bindings per player. Hiding touch controls is Charlie Craft 2.6 | Charlie plays a whole session from the sofa |
 | 7 | 🔨 Swift pad core: GamepadCore (SwiftPM + pod) and `PadReader` (gamepad 0.4.0), so the native engines stop copying `PadMapping` ([swift-core.md](swift-core.md)) | Charlie Craft and Jude Craft build against it; CraftCore's tests still pass |
